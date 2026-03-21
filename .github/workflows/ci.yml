@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --all-extras
+      - name: Lint
+        run: uv run ruff check src/ tests/
+      - name: Type check
+        run: uv run mypy src/ --strict
+      - name: Test
+        run: uv run pytest --tb=short -q
+
+  package:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - name: Set up Python 3.11
+        run: uv python install 3.11
+      - name: Install dependencies
+        run: uv sync --all-extras
+      - name: Build
+        run: uv build
+      - name: Verify wheel install
+        run: |
+          WHEEL=$(ls dist/agentarmor-*.whl)
+          uv venv .pkg-venv
+          .pkg-venv/bin/pip install "$WHEEL"
+          .pkg-venv/bin/python -c "from agentarmor import armor, Workflow"
+          .pkg-venv/bin/pip install "$WHEEL[dashboard]"
+          .pkg-venv/bin/python -c "from agentarmor import Dashboard"
+      - name: Run demo
+        run: uv run demo/demo_workflow.py
+
+  publish:
+    needs: [test, package]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - name: Build
+        run: uv build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

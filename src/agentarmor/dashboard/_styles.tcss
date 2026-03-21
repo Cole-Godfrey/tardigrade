@@ -1,0 +1,26 @@
+Screen {
+    layout: grid;
+    grid-size: 2 2;
+    grid-gutter: 1;
+    padding: 1;
+}
+
+#workflow-panel {
+    border: solid $accent;
+    height: 100%;
+}
+
+#circuit-panel {
+    border: solid $accent;
+    height: 100%;
+}
+
+#cost-panel {
+    border: solid $accent;
+    height: 100%;
+}
+
+#event-log {
+    border: solid $accent;
+    height: 100%;
+}
