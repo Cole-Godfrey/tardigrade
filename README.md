@@ -32,11 +32,11 @@ from agentarmor import armor, Workflow, RetryConfig, BudgetConfig, StepCostRepor
 
 @armor(name="fetch", retry=RetryConfig(max_attempts=3))
 def fetch_data(url: str) -> dict:
-    return {"result": "..."}, StepCostReport(input_tokens=500, output_tokens=200, model="gpt-4o")
+    return {"result": "..."}, StepCostReport(input_tokens=500, output_tokens=200, model="gpt-5.4")
 
 @armor(name="analyze")
 def analyze(data: dict) -> str:
-    return "analysis", StepCostReport(input_tokens=2000, output_tokens=1000, model="gpt-4o")
+    return "analysis", StepCostReport(input_tokens=2000, output_tokens=1000, model="gpt-5.4")
 
 with Workflow("my_pipeline", budget=BudgetConfig(max_budget_usd=1.00)) as wf:
     data = fetch_data("https://api.example.com")
@@ -116,7 +116,7 @@ from agentarmor import BudgetConfig, StepCostReport, Workflow, armor
 
 @armor(name="summarize")
 def summarize(text: str) -> str:
-    return "summary", StepCostReport(input_tokens=500, output_tokens=200, model="gpt-4o")
+    return "summary", StepCostReport(input_tokens=500, output_tokens=200, model="gpt-5.4")
 
 with Workflow("pipeline", budget=BudgetConfig(max_budget_usd=0.50)):
     summarize("hello")

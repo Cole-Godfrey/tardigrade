@@ -15,7 +15,7 @@ from agentarmor import (
 @armor(name="fetch")
 def fetch() -> dict[str, list[int]]:
     time.sleep(0.1)
-    return {"items": [1, 2, 3]}, StepCostReport(cost_usd=0.01, model="gpt-4o-mini")
+    return {"items": [1, 2, 3]}, StepCostReport(cost_usd=0.01, model="gpt-5-mini")
 
 
 @armor(name="enrich")
@@ -27,7 +27,7 @@ def enrich(data: dict[str, list[int]]) -> dict[str, list[int]]:
 @armor(name="summarize")
 def summarize(data: dict[str, list[int]]) -> str:
     time.sleep(0.1)
-    return "summary ready", StepCostReport(cost_usd=0.03, model="gpt-4o")
+    return "summary ready", StepCostReport(cost_usd=0.03, model="gpt-5.4")
 
 
 if __name__ == "__main__":

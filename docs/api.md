@@ -142,7 +142,7 @@ from agentarmor import StepCostReport, armor, report_cost
 
 @armor(name="summarize")
 def summarize(text: str) -> str:
-    report_cost(StepCostReport(input_tokens=500, output_tokens=200, model="gpt-4o"))
+    report_cost(StepCostReport(input_tokens=500, output_tokens=200, model="gpt-5.4"))
     return "summary"
 ```
 

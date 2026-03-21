@@ -11,12 +11,12 @@ from functools import wraps
 from hashlib import sha256
 from inspect import isawaitable
 from time import perf_counter
-from typing import Any, cast, overload
+from typing import Any, TypeGuard, cast, overload
 from uuid import uuid4
 
 import structlog
 
-from ._checkpoint import CheckpointStore
+from ._checkpoint import CheckpointMetadataStore, CheckpointStore
 from ._circuit_breaker import CircuitBreaker
 from ._context import ArmorContext, reset_current_armor_context, set_current_armor_context
 from ._logging import configure_logging
@@ -111,6 +111,94 @@ def _checkpoint_log_fields(checkpoint_state: _CheckpointState | None) -> dict[st
         "run_id": checkpoint_state.run_id,
         "step_name": checkpoint_state.step_name,
     }
+
+
+def _supports_checkpoint_metadata(store: object) -> TypeGuard[CheckpointMetadataStore]:
+    return all(
+        hasattr(store, attribute)
+        for attribute in (
+            "save_metadata",
+            "load_metadata",
+            "asave_metadata",
+            "aload_metadata",
+        )
+    )
+
+
+def _serialize_checkpoint_cost_report(
+    report: StepCostReport | None,
+    cost_usd: float,
+) -> bytes | None:
+    if report is None:
+        return None
+
+    persisted_report = StepCostReport(
+        input_tokens=report.input_tokens,
+        output_tokens=report.output_tokens,
+        model=report.model,
+        cost_usd=cost_usd,
+    )
+    return serialize_result(persisted_report)
+
+
+def _deserialize_checkpoint_cost_report(payload: bytes | None) -> StepCostReport | None:
+    if payload is None:
+        return None
+
+    report = deserialize_result(payload)
+    if isinstance(report, StepCostReport):
+        return report
+
+    _logger.warning(
+        "checkpoint_cost_metadata_invalid",
+        metadata_type=type(report).__name__,
+    )
+    return None
+
+
+def _load_checkpoint_cost_report(checkpoint_state: _CheckpointState) -> StepCostReport | None:
+    store = checkpoint_state.store
+    if not _supports_checkpoint_metadata(store):
+        return None
+
+    return _deserialize_checkpoint_cost_report(
+        store.load_metadata(
+            checkpoint_state.workflow_id,
+            checkpoint_state.step_name,
+            checkpoint_state.run_id,
+        )
+    )
+
+
+async def _aload_checkpoint_cost_report(
+    checkpoint_state: _CheckpointState,
+) -> StepCostReport | None:
+    store = checkpoint_state.store
+    if not _supports_checkpoint_metadata(store):
+        return None
+
+    return _deserialize_checkpoint_cost_report(
+        await store.aload_metadata(
+            checkpoint_state.workflow_id,
+            checkpoint_state.step_name,
+            checkpoint_state.run_id,
+        )
+    )
+
+
+def _replay_checkpoint_cost(
+    workflow: Workflow | None,
+    step_name: str,
+    report: StepCostReport | None,
+) -> float:
+    if workflow is None or report is None:
+        return 0.0
+
+    return workflow.cost_tracker.record(
+        step_name,
+        report,
+        restored_from_checkpoint=True,
+    )
 
 
 def _build_context_config(
@@ -526,6 +614,8 @@ def _checkpoint_result(
     state: _InvocationState,
     checkpoint_state: _CheckpointState,
     result: object,
+    cost_report: StepCostReport | None,
+    cost_usd: float,
 ) -> None:
     payload = serialize_result(result)
     checkpoint_state.store.save(
@@ -534,6 +624,13 @@ def _checkpoint_result(
         checkpoint_state.run_id,
         payload,
     )
+    if _supports_checkpoint_metadata(checkpoint_state.store):
+        checkpoint_state.store.save_metadata(
+            checkpoint_state.workflow_id,
+            checkpoint_state.step_name,
+            checkpoint_state.run_id,
+            _serialize_checkpoint_cost_report(cost_report, cost_usd),
+        )
     _logger.info(
         "step_checkpointed",
         function_name=state.context.function_name,
@@ -551,6 +648,8 @@ async def _acheckpoint_result(
     state: _InvocationState,
     checkpoint_state: _CheckpointState,
     result: object,
+    cost_report: StepCostReport | None,
+    cost_usd: float,
 ) -> None:
     payload = serialize_result(result)
     await checkpoint_state.store.asave(
@@ -559,6 +658,13 @@ async def _acheckpoint_result(
         checkpoint_state.run_id,
         payload,
     )
+    if _supports_checkpoint_metadata(checkpoint_state.store):
+        await checkpoint_state.store.asave_metadata(
+            checkpoint_state.workflow_id,
+            checkpoint_state.step_name,
+            checkpoint_state.run_id,
+            _serialize_checkpoint_cost_report(cost_report, cost_usd),
+        )
     _logger.info(
         "step_checkpointed",
         function_name=state.context.function_name,
@@ -779,13 +885,18 @@ def armor(
                 if checkpoint_state is not None:
                     restored_result = await _arestore_from_checkpoint(checkpoint_state)
                     if restored_result is not _NO_CHECKPOINT:
+                        restored_cost_usd = _replay_checkpoint_cost(
+                            workflow,
+                            function_name,
+                            await _aload_checkpoint_cost_report(checkpoint_state),
+                        )
                         _record_step_success(
                             workflow,
                             function_name,
                             restored_result,
                             0.0,
                             0,
-                            0.0,
+                            restored_cost_usd,
                             from_checkpoint=True,
                         )
                         return restored_result
@@ -809,6 +920,9 @@ def armor(
                             )
                             _record_step_skipped(workflow, function_name, dependency_exc)
                             return FailedStep(function_name, dependency_exc)
+
+                if workflow is not None:
+                    workflow.cost_tracker.check_budget(workflow.workflow_id)
 
                 state = _begin_call(
                     function_name,
@@ -890,7 +1004,13 @@ def armor(
                     )
 
                     if checkpoint_state is not None:
-                        await _acheckpoint_result(state, checkpoint_state, actual_result)
+                        await _acheckpoint_result(
+                            state,
+                            checkpoint_state,
+                            actual_result,
+                            cost_report,
+                            step_cost_usd,
+                        )
 
                     _log_success(state, actual_result)
                     _record_step_success(
@@ -920,13 +1040,18 @@ def armor(
             if checkpoint_state is not None:
                 restored_result = _restore_from_checkpoint(checkpoint_state)
                 if restored_result is not _NO_CHECKPOINT:
+                    restored_cost_usd = _replay_checkpoint_cost(
+                        workflow,
+                        function_name,
+                        _load_checkpoint_cost_report(checkpoint_state),
+                    )
                     _record_step_success(
                         workflow,
                         function_name,
                         restored_result,
                         0.0,
                         0,
-                        0.0,
+                        restored_cost_usd,
                         from_checkpoint=True,
                     )
                     return cast(R, restored_result)
@@ -950,6 +1075,9 @@ def armor(
                         )
                         _record_step_skipped(workflow, function_name, dependency_exc)
                         return cast(R, FailedStep(function_name, dependency_exc))
+
+            if workflow is not None:
+                workflow.cost_tracker.check_budget(workflow.workflow_id)
 
             state = _begin_call(
                 function_name,
@@ -1031,7 +1159,13 @@ def armor(
                 )
 
                 if checkpoint_state is not None:
-                    _checkpoint_result(state, checkpoint_state, actual_result)
+                    _checkpoint_result(
+                        state,
+                        checkpoint_state,
+                        actual_result,
+                        cost_report,
+                        step_cost_usd,
+                    )
 
                 _log_success(state, actual_result)
                 _record_step_success(

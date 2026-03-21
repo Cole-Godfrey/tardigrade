@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import threading
 import time
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 from agentarmor import (
@@ -30,12 +32,19 @@ def say(message: str) -> None:
         print(message)
 
 
+def format_usd(amount: float) -> str:
+    precision = 5 if abs(amount) < 0.01 else 4
+    quantum = Decimal("1").scaleb(-precision)
+    rounded = Decimal(str(amount)).quantize(quantum, rounding=ROUND_HALF_UP)
+    return f"{rounded:.{precision}f}"
+
+
 def fallback_enrich(data: dict[str, object]) -> tuple[dict[str, object], StepCostReport]:
     time.sleep(0.2)
     say("⚡ enrich: primary open, switching to fallback model")
     return (
         {"items": data["items"], "source": "fallback"},
-        StepCostReport(input_tokens=250, output_tokens=120, model="gpt-4o-mini"),
+        StepCostReport(input_tokens=250, output_tokens=120, model="gpt-5-mini"),
     )
 
 
@@ -53,7 +62,7 @@ def fetch_data(url: str) -> tuple[dict[str, object], StepCostReport]:
     say("✓ fetch_data: fetched source records")
     return (
         {"items": [1, 2, 3], "url": url},
-        StepCostReport(input_tokens=400, output_tokens=150, model="gpt-4o-mini"),
+        StepCostReport(input_tokens=400, output_tokens=150, model="gpt-5-mini"),
     )
 
 
@@ -81,7 +90,7 @@ def analyze(data: dict[str, object]) -> tuple[dict[str, object], StepCostReport]
     say("✓ analyze: built intermediate analysis")
     return (
         {"count": len(data["items"]), "url": data["url"]},
-        StepCostReport(input_tokens=900, output_tokens=250, model="gpt-4o"),
+        StepCostReport(input_tokens=900, output_tokens=250, model="gpt-5.4"),
     )
 
 
@@ -91,7 +100,7 @@ def summarize(analysis: dict[str, object]) -> tuple[str, StepCostReport]:
     say("✓ summarize: generated workflow summary")
     return (
         f"Processed {analysis['count']} items from {analysis['url']}",
-        StepCostReport(input_tokens=700, output_tokens=180, model="gpt-4o"),
+        StepCostReport(input_tokens=700, output_tokens=180, model="gpt-5.4"),
     )
 
 
@@ -121,6 +130,25 @@ def run_pipeline(run_label: str) -> Workflow:
     return workflow
 
 
+def run_demo_sequence() -> Workflow:
+    run_pipeline("Run 1: retry, failure, partial result")
+    time.sleep(0.5)
+    second = run_pipeline("Run 2: checkpoint restore and fallback recovery")
+
+    if not QUIET:
+        print(f"\nTotal spend: ${format_usd(second.cost_tracker.total_usd)}")
+        print("Per-step costs:")
+        for entry in second.cost_tracker.step_costs:
+            source = "checkpoint" if entry.get("restored_from_checkpoint") else "live"
+            print(
+                f"  - {entry['step_name']}: ${format_usd(entry['cost_usd'])} "
+                f"({entry['model']}, source={source}, "
+                f"cumulative=${format_usd(entry['cumulative_usd'])})"
+            )
+
+    return second
+
+
 def main() -> None:
     global QUIET
 
@@ -136,23 +164,29 @@ def main() -> None:
     STORE.clear_run("demo-pipeline", RUN_ID)
 
     if args.dashboard:
-        Dashboard().start_in_thread()
-        time.sleep(1.0)
+        dashboard = Dashboard()
+        errors: list[BaseException] = []
 
-    first = run_pipeline("Run 1: retry, failure, partial result")
-    time.sleep(0.5)
-    second = run_pipeline("Run 2: checkpoint restore and fallback recovery")
+        def producer() -> None:
+            try:
+                time.sleep(1.0)
+                run_demo_sequence()
+                time.sleep(2.5)
+            except BaseException as exc:  # pragma: no cover - demo runtime guard
+                errors.append(exc)
+            finally:
+                STORE.close()
+                dashboard._app.call_from_thread(dashboard._app.exit)
 
-    if not QUIET:
-        print(f"\nTotal spend: ${second.cost_tracker.total_usd:.4f}")
-        print("Per-step costs:")
-        for entry in second.cost_tracker.step_costs:
-            print(
-                f"  - {entry['step_name']}: ${entry['cost_usd']:.4f} "
-                f"({entry['model']}, cumulative=${entry['cumulative_usd']:.4f})"
-            )
+        thread = threading.Thread(target=producer, daemon=True)
+        thread.start()
+        dashboard.start()
+        thread.join(timeout=2.0)
+        if errors:
+            raise errors[0]
+        return
 
-    time.sleep(1.0 if args.dashboard else 0.0)
+    run_demo_sequence()
     STORE.close()
 
 

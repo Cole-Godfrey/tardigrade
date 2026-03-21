@@ -21,8 +21,8 @@ from ._types import (
 )
 
 DEFAULT_PRICING: dict[str, tuple[float, float]] = {
-    "gpt-4o": (2.50, 10.00),
-    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-5.4": (2.50, 15.00),
+    "gpt-5-mini": (0.25, 2.00),
     "gpt-4.1": (2.00, 8.00),
     "gpt-4.1-mini": (0.40, 1.60),
     "gpt-4.1-nano": (0.10, 0.40),
@@ -72,7 +72,13 @@ class CostTracker:
             (report.input_tokens * input_price) + (report.output_tokens * output_price)
         ) / 1_000_000
 
-    def record(self, step_name: str, report: StepCostReport) -> float:
+    def record(
+        self,
+        step_name: str,
+        report: StepCostReport,
+        *,
+        restored_from_checkpoint: bool = False,
+    ) -> float:
         with self._lock:
             cost_usd = self.calculate_cost(report)
             self._total_usd += cost_usd
@@ -86,6 +92,8 @@ class CostTracker:
             }
             if self._budget is not None:
                 entry["max_budget_usd"] = self._budget.max_budget_usd
+            if restored_from_checkpoint:
+                entry["restored_from_checkpoint"] = True
             self._step_costs.append(entry)
 
         _logger.info(

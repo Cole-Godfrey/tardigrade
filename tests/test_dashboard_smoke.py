@@ -12,6 +12,7 @@ from agentarmor.dashboard._widgets import (
     CostPanel,
     EventLogPanel,
     WorkflowPanel,
+    _format_usd,
 )
 
 
@@ -63,7 +64,7 @@ def test_cost_panel_accumulates_step_costs() -> None:
         {
             "event": "step_cost_recorded",
             "step_name": "fetch",
-            "model": "gpt-4o-mini",
+            "model": "gpt-5-mini",
             "input_tokens": 100,
             "output_tokens": 50,
             "cost_usd": 0.01,
@@ -74,7 +75,7 @@ def test_cost_panel_accumulates_step_costs() -> None:
         {
             "event": "step_cost_recorded",
             "step_name": "analyze",
-            "model": "gpt-4o",
+            "model": "gpt-5.4",
             "input_tokens": 200,
             "output_tokens": 100,
             "cost_usd": 0.02,
@@ -95,6 +96,79 @@ def test_cost_panel_accumulates_step_costs() -> None:
 
     assert panel.total_usd == pytest.approx(0.07)
     assert len(panel.step_costs) == 3
+
+
+def test_cost_panel_preserves_live_step_row_during_checkpoint_replay() -> None:
+    panel = CostPanel()
+    base_event = {
+        "workflow_id": "demo",
+        "run_id": "run-001",
+        "step_name": "fetch",
+        "model": "gpt-5-mini",
+        "input_tokens": 400,
+        "output_tokens": 150,
+        "cost_usd": 0.00015,
+        "max_budget_usd": 1.0,
+    }
+
+    panel.update_from_event(
+        {
+            **base_event,
+            "event": "step_cost_recorded",
+            "cumulative_usd": 0.00015,
+        }
+    )
+    panel.update_from_event(
+        {
+            **base_event,
+            "event": "step_cost_recorded",
+            "cumulative_usd": 0.00015,
+            "restored_from_checkpoint": True,
+        }
+    )
+
+    assert len(panel.step_costs) == 1
+    assert panel.step_costs[0]["restored_from_checkpoint"] is False
+
+
+def test_cost_panel_same_run_total_does_not_drop_during_checkpoint_replay() -> None:
+    panel = CostPanel()
+
+    panel.update_from_event(
+        {
+            "event": "step_cost_recorded",
+            "workflow_id": "demo",
+            "run_id": "run-001",
+            "step_name": "summarize",
+            "model": "gpt-5.4",
+            "input_tokens": 700,
+            "output_tokens": 180,
+            "cost_usd": 0.00355,
+            "cumulative_usd": 0.00845,
+        }
+    )
+    panel.update_from_event(
+        {
+            "event": "step_cost_recorded",
+            "workflow_id": "demo",
+            "run_id": "run-001",
+            "step_name": "fetch",
+            "model": "gpt-5-mini",
+            "input_tokens": 400,
+            "output_tokens": 150,
+            "cost_usd": 0.00015,
+            "cumulative_usd": 0.00015,
+            "restored_from_checkpoint": True,
+        }
+    )
+
+    assert panel.total_usd == pytest.approx(0.00845)
+
+
+def test_cost_panel_formats_small_costs_with_consistent_precision() -> None:
+    assert _format_usd(0.00015) == "0.00015"
+    assert _format_usd(0.00475) == "0.00475"
+    assert _format_usd(0.0049) == "0.00490"
 
 
 def test_event_log_panel_caps_buffer_at_500_lines() -> None:

@@ -323,11 +323,11 @@ def test_sync_degradation_checkpoint_restores_partial_results(tmp_path: Path) ->
 def test_sync_degradation_budget_exceeded_is_captured_as_workflow_error() -> None:
     @armor(name="step_1")
     def step_1() -> str:
-        return "ok-1", StepCostReport(cost_usd=0.005, model="gpt-4o-mini")
+        return "ok-1", StepCostReport(cost_usd=0.005, model="gpt-5-mini")
 
     @armor(name="step_2")
     def step_2() -> str:
-        return "ok-2", StepCostReport(cost_usd=0.020, model="gpt-4o")
+        return "ok-2", StepCostReport(cost_usd=0.020, model="gpt-5.4")
 
     with Workflow(
         "pipeline",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -78,6 +79,13 @@ def _render_budget_bar(total_usd: float, budget_usd: float | None) -> str:
     width = 20
     filled = round(fraction * width)
     return f"[{'#' * filled}{'-' * (width - filled)}] {fraction * 100:.0f}%"
+
+
+def _format_usd(amount: float) -> str:
+    precision = 5 if abs(amount) < 0.01 else 4
+    quantum = Decimal("1").scaleb(-precision)
+    rounded = Decimal(str(amount)).quantize(quantum, rounding=ROUND_HALF_UP)
+    return f"{rounded:.{precision}f}"
 
 
 @dataclass(slots=True)
@@ -232,27 +240,35 @@ class CostPanel(_StaticBase):
         self.budget_usd: float | None = None
         self.budget_state = "ok"
         self.step_costs: list[dict[str, Any]] = []
+        self._step_indexes: dict[str, int] = {}
+        self._workflow_id: str | None = None
+        self._run_id: str | None = None
         self._refresh()
 
     def update_from_event(self, event: dict[str, Any]) -> None:
+        workflow_id = event.get("workflow_id")
+        run_id = event.get("run_id")
+        if isinstance(workflow_id, str) and isinstance(run_id, str):
+            self._sync_run(workflow_id, run_id)
+
         event_name = event.get("event")
         if event_name == "step_cost_recorded":
             cumulative = event.get("cumulative_usd")
             if isinstance(cumulative, (int, float)):
-                self.total_usd = float(cumulative)
+                self.total_usd = max(self.total_usd, float(cumulative))
             max_budget_usd = event.get("max_budget_usd")
             if isinstance(max_budget_usd, (int, float)):
                 self.budget_usd = float(max_budget_usd)
-            self.step_costs.append(
+            self._upsert_step_cost(
                 {
                     "step_name": str(event.get("step_name", "<unknown>")),
                     "model": str(event.get("model", "")),
                     "input_tokens": int(event.get("input_tokens", 0)),
                     "output_tokens": int(event.get("output_tokens", 0)),
                     "cost_usd": float(event.get("cost_usd", 0.0)),
+                    "restored_from_checkpoint": bool(event.get("restored_from_checkpoint", False)),
                 }
             )
-            self.step_costs = self.step_costs[-25:]
         elif event_name == "budget_warning":
             self.budget_state = "warning"
             max_budget_usd = event.get("max_budget_usd")
@@ -271,19 +287,62 @@ class CostPanel(_StaticBase):
 
         self._refresh()
 
+    def _sync_run(self, workflow_id: str, run_id: str) -> None:
+        if self._workflow_id is None and self._run_id is None:
+            self._workflow_id = workflow_id
+            self._run_id = run_id
+            return
+
+        if self._workflow_id == workflow_id and self._run_id == run_id:
+            return
+
+        self.total_usd = 0.0
+        self.budget_usd = None
+        self.budget_state = "ok"
+        self.step_costs = []
+        self._step_indexes = {}
+        self._workflow_id = workflow_id
+        self._run_id = run_id
+
+    def _upsert_step_cost(self, entry: dict[str, Any]) -> None:
+        step_name = str(entry["step_name"])
+        index = self._step_indexes.get(step_name)
+        if index is None:
+            self.step_costs.append(entry)
+            self._step_indexes[step_name] = len(self.step_costs) - 1
+        else:
+            existing = self.step_costs[index]
+            if (
+                bool(entry.get("restored_from_checkpoint"))
+                and not bool(existing.get("restored_from_checkpoint"))
+            ):
+                # Preserve the original live execution record for this run so replayed
+                # checkpoint costs do not look like a second billable execution.
+                return
+
+            merged = {**existing, **entry}
+            self.step_costs[index] = merged
+
+        if len(self.step_costs) > 25:
+            self.step_costs = self.step_costs[-25:]
+            self._step_indexes = {
+                str(step["step_name"]): idx for idx, step in enumerate(self.step_costs)
+            }
+
     def _refresh(self) -> None:
         lines = [
             "Cost Tracker",
-            f"Total: ${self.total_usd:.4f}",
+            f"Total: ${_format_usd(self.total_usd)}",
             f"Budget: {_render_budget_bar(self.total_usd, self.budget_usd)}",
             f"Budget State: {self.budget_state}",
-            "Step | Model | Tokens | Cost",
+            "Step | Model | Tokens | Cost | Source",
         ]
         for entry in self.step_costs:
             tokens = entry["input_tokens"] + entry["output_tokens"]
+            source = "checkpoint" if entry.get("restored_from_checkpoint") else "live"
             lines.append(
                 f"{entry['step_name']} | {entry['model']} | {tokens} | "
-                f"${entry['cost_usd']:.4f}"
+                f"${_format_usd(entry['cost_usd'])} | {source}"
             )
         self.update("\n".join(lines))
 
