@@ -3,9 +3,9 @@ from __future__ import annotations
 import pytest
 from structlog.testing import capture_logs
 
-import agentarmor._circuit_breaker as circuit_breaker_module
-from agentarmor import CircuitBreakerConfig, CircuitState
-from agentarmor._circuit_breaker import CircuitBreaker
+import tardigrade._circuit_breaker as circuit_breaker_module
+from tardigrade import CircuitBreakerConfig, CircuitState
+from tardigrade._circuit_breaker import CircuitBreaker
 
 
 def test_circuit_breaker_starts_closed() -> None:

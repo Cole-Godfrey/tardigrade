@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from structlog.testing import capture_logs
 
-from agentarmor import RetryConfig, armor
-from agentarmor._context import get_current_armor_context
+from tardigrade import RetryConfig, armor
+from tardigrade._context import get_current_armor_context
 
 
 @pytest.mark.asyncio
@@ -25,7 +25,7 @@ async def test_async_retry_fails_then_succeeds() -> None:
             raise ValueError("transient")
         return "ok"
 
-    with patch("agentarmor._decorator.asyncio.sleep", new=AsyncMock()) as sleep_mock:
+    with patch("tardigrade._decorator.asyncio.sleep", new=AsyncMock()) as sleep_mock:
         with capture_logs() as captured_logs:
             assert await step() == "ok"
 
@@ -49,7 +49,7 @@ async def test_async_retry_exhausts_all_attempts_and_reraises_original_exception
         calls += 1
         raise ValueError("still broken")
 
-    with patch("agentarmor._decorator.asyncio.sleep", new=AsyncMock()) as sleep_mock:
+    with patch("tardigrade._decorator.asyncio.sleep", new=AsyncMock()) as sleep_mock:
         with capture_logs() as captured_logs:
             with pytest.raises(ValueError, match="still broken"):
                 await step()
@@ -81,7 +81,7 @@ async def test_async_retry_non_retryable_exception_skips_retries() -> None:
         calls += 1
         raise TypeError("not retryable")
 
-    with patch("agentarmor._decorator.asyncio.sleep", new=AsyncMock()) as sleep_mock:
+    with patch("tardigrade._decorator.asyncio.sleep", new=AsyncMock()) as sleep_mock:
         with capture_logs() as captured_logs:
             with pytest.raises(TypeError, match="not retryable"):
                 await step()
@@ -98,8 +98,8 @@ async def test_async_retry_uses_asyncio_sleep_not_time_sleep() -> None:
     async def step() -> None:
         raise ValueError("boom")
 
-    with patch("agentarmor._decorator.asyncio.sleep", new=AsyncMock()) as async_sleep_mock:
-        with patch("agentarmor._decorator.time.sleep") as time_sleep_mock:
+    with patch("tardigrade._decorator.asyncio.sleep", new=AsyncMock()) as async_sleep_mock:
+        with patch("tardigrade._decorator.time.sleep") as time_sleep_mock:
             with pytest.raises(ValueError, match="boom"):
                 await step()
 

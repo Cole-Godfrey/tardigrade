@@ -4,10 +4,10 @@ import importlib
 
 import pytest
 
-from agentarmor import armor, configure_logging
-from agentarmor._event_bus import EventBus
-from agentarmor.dashboard import Dashboard
-from agentarmor.dashboard._widgets import (
+from tardigrade import armor, configure_logging
+from tardigrade._event_bus import EventBus
+from tardigrade.dashboard import Dashboard
+from tardigrade.dashboard._widgets import (
     CircuitBreakerPanel,
     CostPanel,
     EventLogPanel,
@@ -199,7 +199,7 @@ def test_dashboard_import_guard_raises_with_install_hint(
 
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
-    with pytest.raises(ImportError, match="pip install agentarmor\\[dashboard\\]"):
+    with pytest.raises(ImportError, match="pip install tardigrade-ai\\[dashboard\\]"):
         Dashboard()
 
 

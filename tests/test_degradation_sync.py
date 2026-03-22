@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from agentarmor import (
+from tardigrade import (
     BudgetConfig,
     CircuitBreakerConfig,
     DegradationConfig,
@@ -389,7 +389,7 @@ def test_sync_degradation_retries_exhaust_then_fail_once(tmp_path: Path) -> None
         return "ok"
 
     try:
-        with patch("agentarmor._decorator.time.sleep"):
+        with patch("tardigrade._decorator.time.sleep"):
             with Workflow(
                 "pipeline",
                 store=store,

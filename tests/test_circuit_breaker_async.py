@@ -7,8 +7,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from structlog.testing import capture_logs
 
-import agentarmor._circuit_breaker as circuit_breaker_module
-from agentarmor import (
+import tardigrade._circuit_breaker as circuit_breaker_module
+from tardigrade import (
     CircuitBreakerConfig,
     CircuitState,
     RetryConfig,
@@ -132,7 +132,7 @@ async def test_async_circuit_breaker_counts_one_failure_per_retried_invocation()
 
     breaker = step._circuit_breaker
 
-    with patch("agentarmor._decorator.asyncio.sleep", new=AsyncMock()):
+    with patch("tardigrade._decorator.asyncio.sleep", new=AsyncMock()):
         with pytest.raises(ValueError, match="primary failed"):
             await step()
         assert breaker.failure_count == 1

@@ -3,13 +3,13 @@ from __future__ import annotations
 import pytest
 from structlog.testing import capture_logs
 
-from agentarmor import (
-    AgentArmorBudgetExceededError,
+from tardigrade import (
     BudgetConfig,
     BudgetPolicy,
     StepCostReport,
+    TardigradeBudgetExceededError,
 )
-from agentarmor._cost import CostTracker
+from tardigrade._cost import CostTracker
 
 
 def test_cost_tracker_calculates_cost_for_known_model() -> None:
@@ -84,7 +84,7 @@ def test_cost_tracker_budget_hard_stop_raises() -> None:
     tracker.record("step", StepCostReport(cost_usd=0.11))
 
     with capture_logs() as captured_logs:
-        with pytest.raises(AgentArmorBudgetExceededError) as exc_info:
+        with pytest.raises(TardigradeBudgetExceededError) as exc_info:
             tracker.check_budget("workflow-a")
 
     assert exc_info.value.workflow_id == "workflow-a"

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentarmor import FailedStep, StepResult, StepStatus, WorkflowResult
+from tardigrade import FailedStep, StepResult, StepStatus, WorkflowResult
 
 
 def test_workflow_result_completed_status_when_all_steps_complete() -> None:

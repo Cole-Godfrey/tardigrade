@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 from structlog.testing import capture_logs
 
-import agentarmor._circuit_breaker as circuit_breaker_module
-from agentarmor import (
+import tardigrade._circuit_breaker as circuit_breaker_module
+from tardigrade import (
     CircuitBreakerConfig,
     CircuitState,
     RetryConfig,
@@ -16,7 +16,7 @@ from agentarmor import (
     Workflow,
     armor,
 )
-from agentarmor._types import AgentArmorCircuitOpenError
+from tardigrade._types import TardigradeCircuitOpenError
 
 
 def test_sync_circuit_breaker_uses_fallback_when_open() -> None:
@@ -91,7 +91,7 @@ def test_sync_circuit_breaker_without_fallback_raises_open_error() -> None:
     with pytest.raises(ValueError, match="primary failed"):
         step()
 
-    with pytest.raises(AgentArmorCircuitOpenError) as exc_info:
+    with pytest.raises(TardigradeCircuitOpenError) as exc_info:
         step()
 
     assert exc_info.value.function_name == "primary_step"
@@ -149,7 +149,7 @@ def test_sync_circuit_breaker_counts_one_failure_per_retried_invocation() -> Non
 
     breaker = step._circuit_breaker
 
-    with patch("agentarmor._decorator.time.sleep"):
+    with patch("tardigrade._decorator.time.sleep"):
         with pytest.raises(ValueError, match="primary failed"):
             step()
         assert breaker.failure_count == 1

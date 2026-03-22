@@ -2,12 +2,12 @@
 
 ## `@armor` decorator
 
-Wrap a sync or async step with AgentArmor's interception layer. The decorator
+Wrap a sync or async step with Tardigrade's interception layer. The decorator
 can apply retries, circuit breakers, checkpoint integration, cost reporting,
 and degradation-aware step tracking.
 
 ```python
-from agentarmor import RetryConfig, armor
+from tardigrade import RetryConfig, armor
 
 @armor(name="fetch", retry=RetryConfig(max_attempts=3))
 def fetch(url: str) -> dict:
@@ -25,7 +25,7 @@ def fetch(url: str) -> dict:
 Controls exponential backoff with jitter for transient failures.
 
 ```python
-from agentarmor import RetryConfig
+from tardigrade import RetryConfig
 
 RetryConfig(max_attempts=4, base_delay=0.25, jitter=False)
 ```
@@ -45,7 +45,7 @@ Protects a failing provider by opening the circuit and optionally routing to a
 fallback callable with the same signature.
 
 ```python
-from agentarmor import CircuitBreakerConfig
+from tardigrade import CircuitBreakerConfig
 
 CircuitBreakerConfig(failure_threshold=3, fallback=my_backup_model)
 ```
@@ -64,7 +64,7 @@ CircuitBreakerConfig(failure_threshold=3, fallback=my_backup_model)
 Scopes checkpoints, cost tracking, and graceful degradation for a workflow run.
 
 ```python
-from agentarmor import Workflow
+from tardigrade import Workflow
 
 with Workflow("pipeline", run_id="run-001") as wf:
     ...
@@ -84,7 +84,7 @@ with Workflow("pipeline", run_id="run-001") as wf:
 Defines budget enforcement and warning behavior.
 
 ```python
-from agentarmor import BudgetConfig, BudgetPolicy
+from tardigrade import BudgetConfig, BudgetPolicy
 
 BudgetConfig(max_budget_usd=1.00, policy=BudgetPolicy.HARD_STOP)
 ```
@@ -101,7 +101,7 @@ BudgetConfig(max_budget_usd=1.00, policy=BudgetPolicy.HARD_STOP)
 Controls how workflows behave when individual steps fail.
 
 ```python
-from agentarmor import DegradationConfig, DegradationPolicy
+from tardigrade import DegradationConfig, DegradationPolicy
 
 DegradationConfig(policy=DegradationPolicy.COLLECT, max_failures=2)
 ```
@@ -138,7 +138,7 @@ Use `StepCostReport` to report token usage and cost. You can return it as the
 last tuple element or push it explicitly with `report_cost()`.
 
 ```python
-from agentarmor import StepCostReport, armor, report_cost
+from tardigrade import StepCostReport, armor, report_cost
 
 @armor(name="summarize")
 def summarize(text: str) -> str:
@@ -159,7 +159,7 @@ The optional Textual dashboard renders workflow progress, circuit state, cost
 tracking, and the event log in real time.
 
 ```python
-from agentarmor import Dashboard
+from tardigrade import Dashboard
 
 Dashboard().start_in_thread()
 ```
@@ -168,4 +168,4 @@ Dashboard().start_in_thread()
 |---|---|
 | `start()` | Runs the dashboard app in the foreground. |
 | `start_in_thread()` | Starts the dashboard on a daemon thread. |
-| CLI | `agentarmor dashboard` |
+| CLI | `tardigrade dashboard` |

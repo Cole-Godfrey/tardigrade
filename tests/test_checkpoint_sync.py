@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from agentarmor import SQLiteCheckpointStore
-from agentarmor._serializer import deserialize_result, serialize_result
-from agentarmor._types import AgentArmorSerializationError
+from tardigrade import SQLiteCheckpointStore
+from tardigrade._serializer import deserialize_result, serialize_result
+from tardigrade._types import TardigradeSerializationError
 
 
 def test_checkpoint_store_save_and_load(tmp_path: Path) -> None:
@@ -75,5 +75,5 @@ def test_checkpoint_store_clear_workflow_removes_everything(tmp_path: Path) -> N
 
 
 def test_checkpoint_serialization_error_is_wrapped() -> None:
-    with pytest.raises(AgentArmorSerializationError):
+    with pytest.raises(TardigradeSerializationError):
         serialize_result(lambda: None)

@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 from structlog.testing import capture_logs
 
-from agentarmor import SQLiteCheckpointStore, Workflow, armor
-from agentarmor._serializer import deserialize_result
+from tardigrade import SQLiteCheckpointStore, Workflow, armor
+from tardigrade._serializer import deserialize_result
 
 
 def test_workflow_executes_all_steps_on_first_run(tmp_path: Path) -> None:

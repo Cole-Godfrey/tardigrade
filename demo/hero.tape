@@ -11,6 +11,8 @@ Set TypingSpeed 0ms
 Set PlaybackSpeed 0.8
 
 Hide
+Type "export PS1='$ '"
+Enter
 Ctrl+L
 Show
 Type "uv run --extra dashboard python demo/demo_workflow.py --dashboard"

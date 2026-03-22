@@ -3,8 +3,8 @@
 ## Development Setup
 
 ```bash
-git clone https://github.com/cole-godfrey/agentarmor.git
-cd agentarmor
+git clone https://github.com/cole-godfrey/tardigrade.git
+cd tardigrade
 uv sync --all-extras
 uv run pytest
 uv run mypy src/ --strict
@@ -36,9 +36,9 @@ uv run ruff check src/ tests/
 
 Follow the existing pattern:
 
-1. Add config types in `src/agentarmor/_types.py`.
+1. Add config types in `src/tardigrade/_types.py`.
 2. Implement feature logic in a focused module.
-3. Integrate it through the `@armor` wrapper in `src/agentarmor/_decorator.py`.
+3. Integrate it through the `@armor` wrapper in `src/tardigrade/_decorator.py`.
 4. Emit structured log events for the dashboard and logs.
 5. Update `docs/api.md`, examples, and relevant dashboard widgets if needed.
 
@@ -47,7 +47,7 @@ Follow the existing pattern:
 Use the bug report template and include:
 
 - Python version
-- AgentArmor version
+- Tardigrade version
 - Minimal reproduction script
 - Expected behavior
 - Actual behavior

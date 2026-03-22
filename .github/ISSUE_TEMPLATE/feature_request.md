@@ -6,6 +6,6 @@ labels: enhancement
 
 **Problem:** What pain point does this solve?
 
-**Proposed solution:** What should AgentArmor do?
+**Proposed solution:** What should Tardigrade do?
 
 **Alternatives considered:** What else did you try?

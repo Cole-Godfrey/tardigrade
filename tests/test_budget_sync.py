@@ -6,19 +6,19 @@ from unittest.mock import patch
 import pytest
 from structlog.testing import capture_logs
 
-from agentarmor import (
-    AgentArmorBudgetExceededError,
+from tardigrade import (
     BudgetConfig,
     BudgetPolicy,
     CircuitBreakerConfig,
     RetryConfig,
     SQLiteCheckpointStore,
     StepCostReport,
+    TardigradeBudgetExceededError,
     Workflow,
     armor,
     report_cost,
 )
-from agentarmor._serializer import deserialize_result
+from tardigrade._serializer import deserialize_result
 
 
 def test_sync_budget_extracts_cost_report_from_return_value(tmp_path: Path) -> None:
@@ -72,7 +72,7 @@ def test_sync_budget_exceeded_stops_workflow_after_checkpoint(tmp_path: Path) ->
         return "should-not-run"
 
     try:
-        with pytest.raises(AgentArmorBudgetExceededError) as exc_info:
+        with pytest.raises(TardigradeBudgetExceededError) as exc_info:
             with Workflow(
                 "pipeline",
                 run_id="run-1",
@@ -189,7 +189,7 @@ def test_sync_budget_tracks_cost_once_after_retries(tmp_path: Path) -> None:
         return "done", StepCostReport(cost_usd=0.01, model="gpt-5-mini")
 
     try:
-        with patch("agentarmor._decorator.time.sleep"):
+        with patch("tardigrade._decorator.time.sleep"):
             with Workflow("pipeline", run_id="run-1", store=store) as workflow:
                 assert step() == "done"
 
@@ -328,7 +328,7 @@ def test_sync_budget_resume_enforces_restored_spend_before_new_work(tmp_path: Pa
         return f"done={value}"
 
     try:
-        with pytest.raises(AgentArmorBudgetExceededError):
+        with pytest.raises(TardigradeBudgetExceededError):
             with Workflow(
                 "pipeline",
                 run_id="run-1",
@@ -337,7 +337,7 @@ def test_sync_budget_resume_enforces_restored_spend_before_new_work(tmp_path: Pa
             ):
                 step_1()
 
-        with pytest.raises(AgentArmorBudgetExceededError):
+        with pytest.raises(TardigradeBudgetExceededError):
             with Workflow(
                 "pipeline",
                 run_id="run-1",

@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pytest
 from structlog.testing import capture_logs
 
-from agentarmor import RetryConfig, armor
-from agentarmor._context import get_current_armor_context
+from tardigrade import RetryConfig, armor
+from tardigrade._context import get_current_armor_context
 
 
 def test_sync_retry_success_on_first_try_has_no_retry_events() -> None:
@@ -43,7 +43,7 @@ def test_sync_retry_fails_then_succeeds() -> None:
             raise ValueError("transient")
         return "ok"
 
-    with patch("agentarmor._decorator.time.sleep") as sleep_mock:
+    with patch("tardigrade._decorator.time.sleep") as sleep_mock:
         with capture_logs() as captured_logs:
             assert step() == "ok"
 
@@ -67,7 +67,7 @@ def test_sync_retry_exhausts_all_attempts_and_reraises_original_exception() -> N
         calls += 1
         raise ValueError("still broken")
 
-    with patch("agentarmor._decorator.time.sleep") as sleep_mock:
+    with patch("tardigrade._decorator.time.sleep") as sleep_mock:
         with capture_logs() as captured_logs:
             with pytest.raises(ValueError, match="still broken"):
                 step()
@@ -99,7 +99,7 @@ def test_sync_retry_non_retryable_exception_skips_retries() -> None:
         calls += 1
         raise TypeError("not retryable")
 
-    with patch("agentarmor._decorator.time.sleep") as sleep_mock:
+    with patch("tardigrade._decorator.time.sleep") as sleep_mock:
         with capture_logs() as captured_logs:
             with pytest.raises(TypeError, match="not retryable"):
                 step()
@@ -122,7 +122,7 @@ def test_sync_retry_backoff_delay_increases_exponentially() -> None:
     def step() -> None:
         raise ValueError("boom")
 
-    with patch("agentarmor._decorator.time.sleep") as sleep_mock:
+    with patch("tardigrade._decorator.time.sleep") as sleep_mock:
         with pytest.raises(ValueError, match="boom"):
             step()
 
@@ -142,7 +142,7 @@ def test_sync_retry_respects_max_delay() -> None:
     def step() -> None:
         raise ValueError("boom")
 
-    with patch("agentarmor._decorator.time.sleep") as sleep_mock:
+    with patch("tardigrade._decorator.time.sleep") as sleep_mock:
         with pytest.raises(ValueError, match="boom"):
             step()
 
@@ -154,8 +154,8 @@ def test_sync_retry_jitter_changes_delay() -> None:
     def step() -> None:
         raise ValueError("boom")
 
-    with patch("agentarmor._types.random.uniform", return_value=1.25):
-        with patch("agentarmor._decorator.time.sleep") as sleep_mock:
+    with patch("tardigrade._types.random.uniform", return_value=1.25):
+        with patch("tardigrade._decorator.time.sleep") as sleep_mock:
             with pytest.raises(ValueError, match="boom"):
                 step()
 
@@ -171,8 +171,8 @@ def test_sync_retry_true_uses_default_retry_config() -> None:
         calls += 1
         raise TimeoutError("rate limited")
 
-    with patch("agentarmor._types.random.uniform", return_value=1.0):
-        with patch("agentarmor._decorator.time.sleep") as sleep_mock:
+    with patch("tardigrade._types.random.uniform", return_value=1.0):
+        with patch("tardigrade._decorator.time.sleep") as sleep_mock:
             with pytest.raises(TimeoutError, match="rate limited"):
                 step()
 

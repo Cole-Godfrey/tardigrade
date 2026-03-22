@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from structlog.testing import capture_logs
 
-from agentarmor import armor
-from agentarmor._context import get_current_armor_context
+from tardigrade import armor
+from tardigrade._context import get_current_armor_context
 
 
 @pytest.mark.asyncio

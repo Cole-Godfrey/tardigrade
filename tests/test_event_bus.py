@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 
-from agentarmor._event_bus import EventBus
+from tardigrade._event_bus import EventBus
 
 
 def test_event_bus_publish_and_poll_returns_events_in_order() -> None:

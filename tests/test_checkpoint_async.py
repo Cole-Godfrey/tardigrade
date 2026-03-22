@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from agentarmor import SQLiteCheckpointStore
-from agentarmor._serializer import deserialize_result, serialize_result
+from tardigrade import SQLiteCheckpointStore
+from tardigrade._serializer import deserialize_result, serialize_result
 
 
 @pytest.mark.asyncio

@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import time
 
-from agentarmor import (
+from tardigrade import (
     CircuitBreakerConfig,
     DegradationConfig,
     DegradationPolicy,

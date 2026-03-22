@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/AgentArmor.iml" filepath="$PROJECT_DIR$/.idea/AgentArmor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Tardigrade.iml" filepath="$PROJECT_DIR$/.idea/Tardigrade.iml" />
     </modules>
   </component>
 </project>

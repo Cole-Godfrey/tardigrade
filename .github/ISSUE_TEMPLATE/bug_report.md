@@ -1,10 +1,10 @@
 ---
 name: Bug Report
-about: Report a bug in AgentArmor
+about: Report a bug in Tardigrade
 labels: bug
 ---
 
-**AgentArmor version:**
+**Tardigrade version:**
 
 **Python version:**
 

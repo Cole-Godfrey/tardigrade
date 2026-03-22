@@ -41,15 +41,20 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
       - name: Build
-        run: uv build
+        run: uv build --out-dir dist --clear
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
       - name: Verify wheel install
         run: |
-          WHEEL=$(ls dist/agentarmor-*.whl)
+          WHEEL=$(ls dist/tardigrade_ai-*.whl)
           uv venv .pkg-venv
           .pkg-venv/bin/pip install "$WHEEL"
-          .pkg-venv/bin/python -c "from agentarmor import armor, Workflow"
+          .pkg-venv/bin/python -c "from tardigrade import armor, Workflow"
           .pkg-venv/bin/pip install "$WHEEL[dashboard]"
-          .pkg-venv/bin/python -c "from agentarmor import Dashboard"
+          .pkg-venv/bin/python -c "from tardigrade import Dashboard"
       - name: Run demo
         run: uv run demo/demo_workflow.py
 
@@ -57,12 +62,16 @@ jobs:
     needs: [test, package]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/tardigrade-ai
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
-      - name: Build
-        run: uv build
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

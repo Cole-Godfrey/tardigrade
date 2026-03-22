@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from agentarmor import (
+from tardigrade import (
     DegradationConfig,
     DegradationPolicy,
     FailedStep,

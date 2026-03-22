@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from agentarmor import RetryConfig, armor
+from tardigrade import RetryConfig, armor
 
 
 class HTTPStatusError(RuntimeError):

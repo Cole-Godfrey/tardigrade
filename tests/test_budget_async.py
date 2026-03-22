@@ -5,18 +5,18 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from agentarmor import (
-    AgentArmorBudgetExceededError,
+from tardigrade import (
     BudgetConfig,
     BudgetPolicy,
     RetryConfig,
     SQLiteCheckpointStore,
     StepCostReport,
+    TardigradeBudgetExceededError,
     Workflow,
     armor,
     report_cost,
 )
-from agentarmor._serializer import deserialize_result
+from tardigrade._serializer import deserialize_result
 
 
 @pytest.mark.asyncio
@@ -73,7 +73,7 @@ async def test_async_budget_exceeded_stops_workflow_after_checkpoint(tmp_path: P
         return "should-not-run"
 
     try:
-        with pytest.raises(AgentArmorBudgetExceededError) as exc_info:
+        with pytest.raises(TardigradeBudgetExceededError) as exc_info:
             async with Workflow(
                 "pipeline",
                 run_id="run-1",
@@ -106,7 +106,7 @@ async def test_async_budget_tracks_cost_once_after_retries(tmp_path: Path) -> No
         return "done", StepCostReport(cost_usd=0.01, model="gpt-5-mini")
 
     try:
-        with patch("agentarmor._decorator.asyncio.sleep", new=AsyncMock()):
+        with patch("tardigrade._decorator.asyncio.sleep", new=AsyncMock()):
             async with Workflow("pipeline", run_id="run-1", store=store) as workflow:
                 assert await step() == "done"
 
@@ -186,7 +186,7 @@ async def test_async_budget_resume_enforces_restored_spend_before_new_work(
         return f"done={value}"
 
     try:
-        with pytest.raises(AgentArmorBudgetExceededError):
+        with pytest.raises(TardigradeBudgetExceededError):
             async with Workflow(
                 "pipeline",
                 run_id="run-1",
@@ -195,7 +195,7 @@ async def test_async_budget_resume_enforces_restored_spend_before_new_work(
             ):
                 await step_1()
 
-        with pytest.raises(AgentArmorBudgetExceededError):
+        with pytest.raises(TardigradeBudgetExceededError):
             async with Workflow(
                 "pipeline",
                 run_id="run-1",

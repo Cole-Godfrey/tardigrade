@@ -6,7 +6,7 @@ import time
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
-from agentarmor import (
+from tardigrade import (
     BudgetConfig,
     CircuitBreakerConfig,
     Dashboard,
@@ -20,7 +20,7 @@ from agentarmor import (
     armor,
 )
 
-STORE = SQLiteCheckpointStore(Path(".agentarmor/demo-checkpoints.db"))
+STORE = SQLiteCheckpointStore(Path(".tardigrade/demo-checkpoints.db"))
 RUN_ID = "demo-run-001"
 QUIET = False
 FETCH_ATTEMPTS = 0
@@ -152,11 +152,11 @@ def run_demo_sequence() -> Workflow:
 def main() -> None:
     global QUIET
 
-    parser = argparse.ArgumentParser(description="Run the AgentArmor demo workflow.")
+    parser = argparse.ArgumentParser(description="Run the Tardigrade demo workflow.")
     parser.add_argument(
         "--dashboard",
         action="store_true",
-        help="Start the AgentArmor dashboard in a background thread.",
+        help="Start the Tardigrade dashboard in a background thread.",
     )
     args = parser.parse_args()
 

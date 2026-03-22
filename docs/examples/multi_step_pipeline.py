@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 
-from agentarmor import (
+from tardigrade import (
     BudgetConfig,
     DegradationConfig,
     DegradationPolicy,

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agentarmor"
+name = "tardigrade-ai"
 version = "0.1.0"
 description = "Resilience middleware that makes AI agents self-healing — retries, checkpointing, circuit breakers, cost budgets, and graceful degradation for any agent framework."
 readme = "README.md"
@@ -57,14 +57,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cole-godfrey/agentarmor"
-Documentation = "https://github.com/cole-godfrey/agentarmor/tree/main/docs"
-Repository = "https://github.com/cole-godfrey/agentarmor"
-Changelog = "https://github.com/cole-godfrey/agentarmor/blob/main/CHANGELOG.md"
-"Bug Tracker" = "https://github.com/cole-godfrey/agentarmor/issues"
+Homepage = "https://github.com/cole-godfrey/tardigrade"
+Documentation = "https://github.com/cole-godfrey/tardigrade/tree/main/docs"
+Repository = "https://github.com/cole-godfrey/tardigrade"
+Changelog = "https://github.com/cole-godfrey/tardigrade/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/cole-godfrey/tardigrade/issues"
 
 [project.scripts]
-agentarmor = "agentarmor.__main__:main"
+tardigrade = "tardigrade.__main__:main"
 
 [dependency-groups]
 dev = [
@@ -78,7 +78,7 @@ dev = [
 default-groups = ["dev"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agentarmor"]
+packages = ["src/tardigrade"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -98,4 +98,4 @@ src = ["src", "tests"]
 select = ["E", "F", "B", "I", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["agentarmor"]
+known-first-party = ["tardigrade"]

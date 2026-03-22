@@ -1,34 +1,34 @@
-# 🛡️ AgentArmor
+# 🛡️ Tardigrade
 
 **Resilience middleware that makes AI agents self-healing.**
 
 Retries · Checkpointing · Circuit breakers · Cost budgets · Graceful degradation  
 Works with LangGraph, CrewAI, OpenAI SDK, or raw API calls.
 
-[![PyPI version](https://img.shields.io/pypi/v/agentarmor)](https://pypi.org/project/agentarmor/)
+[![PyPI version](https://img.shields.io/pypi/v/tardigrade-ai)](https://pypi.org/project/tardigrade-ai/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
-[![Tests](https://img.shields.io/github/actions/workflow/status/cole-godfrey/agentarmor/ci.yml?label=tests)](https://github.com/cole-godfrey/agentarmor/actions)
+[![Tests](https://img.shields.io/github/actions/workflow/status/cole-godfrey/tardigrade/ci.yml?label=tests)](https://github.com/cole-godfrey/tardigrade/actions)
 
-![AgentArmor dashboard demo](docs/assets/hero.gif)
+![Tardigrade dashboard demo](https://raw.githubusercontent.com/cole-godfrey/tardigrade/main/docs/assets/hero.gif)
 
 > An agent with 85% accuracy per step has just **20% end-to-end success** over 10 steps.  
-> AgentArmor wraps your agent with production-grade resilience so step 7 failing  
+> Tardigrade wraps your agent with production-grade resilience so step 7 failing  
 > does not mean starting over from scratch.
 
 ## Install
 
 ```bash
-pip install agentarmor
+pip install tardigrade-ai
 
 # With the real-time dashboard:
-pip install agentarmor[dashboard]
+pip install tardigrade-ai[dashboard]
 ```
 
 ## Quickstart
 
 ```python
-from agentarmor import armor, Workflow, RetryConfig, BudgetConfig, StepCostReport
+from tardigrade import armor, Workflow, RetryConfig, BudgetConfig, StepCostReport
 
 @armor(name="fetch", retry=RetryConfig(max_attempts=3))
 def fetch_data(url: str) -> dict:
@@ -43,7 +43,7 @@ with Workflow("my_pipeline", budget=BudgetConfig(max_budget_usd=1.00)) as wf:
     result = analyze(data)
 ```
 
-If the workflow crashes, rerun it with the same `run_id` and AgentArmor resumes
+If the workflow crashes, rerun it with the same `run_id` and Tardigrade resumes
 from the last checkpoint instead of starting from scratch.
 
 ## Features
@@ -61,7 +61,7 @@ from the last checkpoint instead of starting from scratch.
 
 ## Before and After
 
-| | Without AgentArmor | With AgentArmor |
+| | Without Tardigrade | With Tardigrade |
 |---|---|---|
 | Step 7 of 10 fails | Start over. Waste $3 and 4 minutes. | Resume from step 7. About $0.15 and 30 seconds. |
 | Provider goes down | Cascade failure across all agents. | Circuit breaker routes to a backup model. |
@@ -73,7 +73,7 @@ from the last checkpoint instead of starting from scratch.
 ### Retry a flaky step
 
 ```python
-from agentarmor import RetryConfig, armor
+from tardigrade import RetryConfig, armor
 
 class RateLimitedError(RuntimeError):
     pass
@@ -86,7 +86,7 @@ def call_provider(prompt: str) -> str:
 ### Switch to a fallback model when the primary is down
 
 ```python
-from agentarmor import CircuitBreakerConfig, armor
+from tardigrade import CircuitBreakerConfig, armor
 
 def call_claude_haiku(prompt: str) -> str:
     return "fallback response"
@@ -99,7 +99,7 @@ def call_gpt54(prompt: str) -> str:
 ### Resume a checkpointed workflow
 
 ```python
-from agentarmor import Workflow, armor
+from tardigrade import Workflow, armor
 
 @armor(name="fetch")
 def fetch() -> str:
@@ -112,7 +112,7 @@ with Workflow("pipeline", run_id="run-001"):
 ### Enforce a workflow budget
 
 ```python
-from agentarmor import BudgetConfig, StepCostReport, Workflow, armor
+from tardigrade import BudgetConfig, StepCostReport, Workflow, armor
 
 @armor(name="summarize")
 def summarize(text: str) -> str:
@@ -125,7 +125,7 @@ with Workflow("pipeline", budget=BudgetConfig(max_budget_usd=0.50)):
 ### Return partial results instead of crashing
 
 ```python
-from agentarmor import DegradationConfig, DegradationPolicy, Workflow, armor
+from tardigrade import DegradationConfig, DegradationPolicy, Workflow, armor
 
 @armor(name="enrich")
 def enrich(data: dict) -> dict:
@@ -142,16 +142,16 @@ Extended runnable examples live in [docs/examples](docs/examples).
 
 ## Dashboard
 
-![AgentArmor dashboard demo](docs/assets/hero.gif)
+![Tardigrade dashboard demo](https://raw.githubusercontent.com/cole-godfrey/tardigrade/main/docs/assets/hero.gif)
 
 ```bash
 # CLI
-agentarmor dashboard
+tardigrade dashboard
 ```
 
 ```python
 # Programmatic
-from agentarmor import Dashboard
+from tardigrade import Dashboard
 
 Dashboard().start_in_thread()
 ```
