@@ -1,4 +1,4 @@
-# 🛡️ Tardigrade
+![Tardigrade banner](https://raw.githubusercontent.com/cole-godfrey/tardigrade/main/docs/assets/banner.png)
 
 **Resilience middleware that makes AI agents self-healing.**
 
