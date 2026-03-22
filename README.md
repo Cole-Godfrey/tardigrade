@@ -1,4 +1,4 @@
-![Tardigrade banner](https://raw.githubusercontent.com/cole-godfrey/tardigrade/main/docs/assets/banner.png)
+![Tardigrade banner](https://raw.githubusercontent.com/Cole-Godfrey/tardigrade/main/docs/assets/banner.png)
 
 **Resilience middleware that makes AI agents self-healing.**
 
@@ -8,9 +8,9 @@ Works with LangGraph, CrewAI, OpenAI SDK, or raw API calls.
 [![PyPI version](https://img.shields.io/pypi/v/tardigrade-ai)](https://pypi.org/project/tardigrade-ai/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
-[![Tests](https://img.shields.io/github/actions/workflow/status/cole-godfrey/tardigrade/ci.yml?label=tests)](https://github.com/cole-godfrey/tardigrade/actions)
+[![Tests](https://img.shields.io/github/actions/workflow/status/Cole-Godfrey/tardigrade/ci.yml?label=tests)](https://github.com/Cole-Godfrey/tardigrade/actions)
 
-![Tardigrade dashboard demo](https://raw.githubusercontent.com/cole-godfrey/tardigrade/main/docs/assets/hero.gif)
+![Tardigrade dashboard demo](https://raw.githubusercontent.com/Cole-Godfrey/tardigrade/main/docs/assets/hero.gif)
 
 > An agent with 85% accuracy per step has just **20% end-to-end success** over 10 steps.  
 > Tardigrade wraps your agent with production-grade resilience so step 7 failing  
@@ -142,7 +142,7 @@ Extended runnable examples live in [docs/examples](docs/examples).
 
 ## Dashboard
 
-![Tardigrade dashboard demo](https://raw.githubusercontent.com/cole-godfrey/tardigrade/main/docs/assets/hero.gif)
+![Tardigrade dashboard demo](https://raw.githubusercontent.com/Cole-Godfrey/tardigrade/main/docs/assets/hero.gif)
 
 ```bash
 # CLI

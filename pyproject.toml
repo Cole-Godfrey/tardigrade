@@ -57,11 +57,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cole-godfrey/tardigrade"
-Documentation = "https://github.com/cole-godfrey/tardigrade/tree/main/docs"
-Repository = "https://github.com/cole-godfrey/tardigrade"
-Changelog = "https://github.com/cole-godfrey/tardigrade/blob/main/CHANGELOG.md"
-"Bug Tracker" = "https://github.com/cole-godfrey/tardigrade/issues"
+Homepage = "https://github.com/Cole-Godfrey/tardigrade"
+Documentation = "https://github.com/Cole-Godfrey/tardigrade/tree/main/docs"
+Repository = "https://github.com/Cole-Godfrey/tardigrade"
+Changelog = "https://github.com/Cole-Godfrey/tardigrade/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/Cole-Godfrey/tardigrade/issues"
 
 [project.scripts]
 tardigrade = "tardigrade.__main__:main"
