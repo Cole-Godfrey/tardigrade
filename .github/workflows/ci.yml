@@ -50,11 +50,13 @@ jobs:
       - name: Verify wheel install
         run: |
           WHEEL=$(ls dist/tardigrade_ai-*.whl)
-          uv venv .pkg-venv
-          .pkg-venv/bin/pip install "$WHEEL"
+          WHEEL_URL="file://$PWD/$WHEEL"
+          uv venv --python 3.11 .pkg-venv
+          uv pip install --python .pkg-venv/bin/python "$WHEEL"
           .pkg-venv/bin/python -c "from tardigrade import armor, Workflow"
-          .pkg-venv/bin/pip install "$WHEEL[dashboard]"
-          .pkg-venv/bin/python -c "from tardigrade import Dashboard"
+          uv venv --python 3.11 .pkg-venv-dashboard
+          uv pip install --python .pkg-venv-dashboard/bin/python "tardigrade-ai[dashboard] @ $WHEEL_URL"
+          .pkg-venv-dashboard/bin/python -c "from tardigrade import Dashboard"
       - name: Run demo
         run: uv run demo/demo_workflow.py
 
