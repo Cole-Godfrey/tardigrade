@@ -22,7 +22,7 @@ Works with LangGraph, CrewAI, OpenAI SDK, or raw API calls.
 pip install tardigrade-ai
 
 # With the real-time dashboard:
-pip install tardigrade-ai[dashboard]
+pip install "tardigrade-ai[dashboard]"
 ```
 
 ## Quickstart

@@ -10,7 +10,7 @@ def _check_deps() -> None:
     except ImportError:
         raise ImportError(
             "Dashboard requires extra dependencies. "
-            "Install with: pip install tardigrade-ai[dashboard]"
+            "Install with: pip install \"tardigrade-ai[dashboard]\""
         ) from None
 
 

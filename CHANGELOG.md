@@ -10,5 +10,5 @@
 - Circuit breakers with automatic fallback model switching via `CircuitBreakerConfig`
 - Cost budget enforcement with configurable policies via `BudgetConfig` and `StepCostReport`
 - Graceful degradation with partial result collection via `DegradationConfig` and `WorkflowResult`
-- Real-time terminal dashboard via `tardigrade-ai[dashboard]`
+- Real-time terminal dashboard via `"tardigrade-ai[dashboard]"`
 - CLI entry point via `tardigrade dashboard`
