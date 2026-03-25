@@ -164,6 +164,10 @@ Run the self-contained demo script:
 uv run demo/demo_workflow.py
 ```
 
+When `"tardigrade-ai[dashboard]"` is installed, the demo starts the dashboard
+automatically in an interactive terminal. Otherwise it falls back to plain output.
+Use `--no-dashboard` to force plain output.
+
 Record the hero GIF when `vhs` is installed:
 
 ```bash

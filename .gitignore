@@ -1,0 +1,11 @@
+.DS_Store
+.idea/
+.launch/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.tardigrade/
+.venv/
+__pycache__/
+*.py[cod]
+dist/

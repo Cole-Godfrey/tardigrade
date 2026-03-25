@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
+import os
 import threading
 import time
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 from tardigrade import (
     BudgetConfig,
     CircuitBreakerConfig,
-    Dashboard,
     DegradationConfig,
     DegradationPolicy,
     FailedStep,
@@ -149,6 +150,18 @@ def run_demo_sequence() -> Workflow:
     return second
 
 
+def dashboard_available() -> bool:
+    return importlib.util.find_spec("textual") is not None
+
+
+def should_use_dashboard(explicit: bool | None) -> bool:
+    if explicit is not None:
+        return explicit
+    if os.environ.get("CI"):
+        return False
+    return dashboard_available()
+
+
 def main() -> None:
     global QUIET
 
@@ -156,14 +169,31 @@ def main() -> None:
     parser.add_argument(
         "--dashboard",
         action="store_true",
-        help="Start the Tardigrade dashboard in a background thread.",
+        dest="dashboard",
+        help="Force the Tardigrade dashboard on.",
     )
+    parser.add_argument(
+        "--no-dashboard",
+        action="store_false",
+        dest="dashboard",
+        help="Force plain terminal output without the dashboard.",
+    )
+    parser.set_defaults(dashboard=None)
     args = parser.parse_args()
 
-    QUIET = args.dashboard
+    use_dashboard = should_use_dashboard(args.dashboard)
+
+    if use_dashboard and not dashboard_available():
+        raise SystemExit(
+            'Dashboard dependencies are not installed. Run: pip install "tardigrade-ai[dashboard]"'
+        )
+
+    QUIET = use_dashboard
     STORE.clear_run("demo-pipeline", RUN_ID)
 
-    if args.dashboard:
+    if use_dashboard:
+        from tardigrade import Dashboard
+
         dashboard = Dashboard()
         errors: list[BaseException] = []
 

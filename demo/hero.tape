@@ -15,7 +15,7 @@ Type "export PS1='$ '"
 Enter
 Ctrl+L
 Show
-Type "uv run --extra dashboard python demo/demo_workflow.py --dashboard"
+Type "uv run --extra dashboard python demo/demo_workflow.py"
 Sleep 1.2s
 Enter
 Sleep 5.2s
