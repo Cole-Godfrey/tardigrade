@@ -32,13 +32,6 @@ uv run ruff check src/ tests/
 3. Run `uv run pytest`, `uv run mypy src/ --strict`, and `uv run ruff check src/ tests/`.
 4. Describe the behavior change clearly in the pull request.
 
-## Demo Maintenance
-
-- The README only documents end-user demo commands.
-- Maintainer-only recording assets live in `demo/hero.tape` and the local `.launch/` workspace.
-- Use `uv run --extra dashboard python demo/demo_workflow.py --profile video` when recording the longer narrated launch demo.
-- Use `vhs demo/hero.tape` only when regenerating the short README GIF.
-
 ## Adding a New Resilience Feature
 
 Follow the existing pattern:
