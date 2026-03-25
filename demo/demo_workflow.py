@@ -34,6 +34,7 @@ class DemoTiming:
     fetch_retry_delay: float
     enrich_primary_delay: float
     enrich_fallback_delay: float
+    circuit_recovery_timeout: float
     analyze_delay: float
     summarize_delay: float
     run_intro_pause: float
@@ -48,6 +49,7 @@ SHORT_TIMING = DemoTiming(
     fetch_retry_delay=0.2,
     enrich_primary_delay=0.2,
     enrich_fallback_delay=0.2,
+    circuit_recovery_timeout=2.0,
     analyze_delay=0.2,
     summarize_delay=0.2,
     run_intro_pause=0.0,
@@ -62,6 +64,7 @@ VIDEO_TIMING = DemoTiming(
     fetch_retry_delay=6.0,
     enrich_primary_delay=4.0,
     enrich_fallback_delay=4.0,
+    circuit_recovery_timeout=40.0,
     analyze_delay=5.0,
     summarize_delay=5.0,
     run_intro_pause=2.0,
@@ -100,7 +103,7 @@ class DemoScenario:
             name="enrich",
             circuit_breaker=CircuitBreakerConfig(
                 failure_threshold=1,
-                recovery_timeout=2.0,
+                recovery_timeout=self.timing.circuit_recovery_timeout,
                 success_threshold=1,
                 fallback=self._fallback_enrich,
                 monitored_exceptions=(ConnectionError,),

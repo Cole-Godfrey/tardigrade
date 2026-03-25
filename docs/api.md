@@ -164,8 +164,11 @@ from tardigrade import Dashboard
 Dashboard().start_in_thread()
 ```
 
+The dashboard consumes Tardigrade events from the current Python process. Start
+it before running your workflow, or use the demo script to see a full example.
+
 | Method | Description |
 |---|---|
 | `start()` | Runs the dashboard app in the foreground. |
 | `start_in_thread()` | Starts the dashboard on a daemon thread. |
-| CLI | `tardigrade dashboard` |
+| CLI | `tardigrade dashboard` opens the dashboard UI shell only. |
