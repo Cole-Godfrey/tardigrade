@@ -147,7 +147,7 @@ Extended runnable examples live in [docs/examples](docs/examples).
 The dashboard renders live events from the same Python process that is running
 your workflow.
 
-Real workflow usage patterns:
+Usage:
 
 ```python
 # Recommended: start the dashboard in the background, then run your workflow
