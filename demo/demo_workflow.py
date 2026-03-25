@@ -187,6 +187,11 @@ def main() -> None:
         raise SystemExit(
             'Dashboard dependencies are not installed. Run: pip install "tardigrade-ai[dashboard]"'
         )
+    if not use_dashboard and args.dashboard is None and not dashboard_available():
+        print(
+            "Dashboard dependencies not installed. "
+            "For the full UI, run: uv run --extra dashboard python demo/demo_workflow.py"
+        )
 
     QUIET = use_dashboard
     STORE.clear_run("demo-pipeline", RUN_ID)

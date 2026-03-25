@@ -161,12 +161,17 @@ Dashboard().start_in_thread()
 Run the self-contained demo script:
 
 ```bash
-uv run demo/demo_workflow.py
+uv run --extra dashboard python demo/demo_workflow.py
 ```
 
-When `"tardigrade-ai[dashboard]"` is installed, the demo starts the dashboard
-automatically in an interactive terminal. Otherwise it falls back to plain output.
-Use `--no-dashboard` to force plain output.
+Plain-text fallback:
+
+```bash
+uv run python demo/demo_workflow.py --no-dashboard
+```
+
+If you run the demo without the dashboard extra, it falls back to plain output
+and prints the exact command to launch the full UI.
 
 Record the hero GIF when `vhs` is installed:
 
