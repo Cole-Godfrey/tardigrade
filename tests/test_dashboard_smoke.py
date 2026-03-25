@@ -199,7 +199,10 @@ def test_dashboard_import_guard_raises_with_install_hint(
 
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
-    with pytest.raises(ImportError, match="pip install tardigrade-ai\\[dashboard\\]"):
+    with pytest.raises(
+        ImportError,
+        match=r'pip install "tardigrade-ai\[dashboard\]"',
+    ):
         Dashboard()
 
 
