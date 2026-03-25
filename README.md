@@ -161,7 +161,7 @@ Dashboard().start_in_thread()
 Run the self-contained demo script:
 
 ```bash
-uv run --extra dashboard python demo/demo_workflow.py --profile short
+uv run --extra dashboard python demo/demo_workflow.py
 ```
 
 Plain-text fallback:
@@ -172,21 +172,6 @@ uv run python demo/demo_workflow.py --no-dashboard
 
 If you run the demo without the dashboard extra, it falls back to plain output
 and prints the exact command to launch the full UI.
-
-Long-form video profile for narrated recordings:
-
-```bash
-uv run --extra dashboard python demo/demo_workflow.py --profile video
-```
-
-The `video` profile runs for about 90 seconds so you have time to talk through
-retries, checkpoint restores, circuit breaker transitions, and cost tracking.
-
-Record the hero GIF when `vhs` is installed:
-
-```bash
-vhs demo/hero.tape
-```
 
 ## API and Project Docs
 
