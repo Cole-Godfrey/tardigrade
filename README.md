@@ -145,24 +145,31 @@ Extended runnable examples live in [docs/examples](docs/examples).
 ![Tardigrade dashboard demo](https://raw.githubusercontent.com/Cole-Godfrey/tardigrade/main/docs/assets/hero.gif)
 
 The dashboard renders live events from the same Python process that is running
-your workflow. The two practical ways to use it today are:
+your workflow.
 
-```bash
-# Run the demo with the dashboard
-uv run --extra dashboard python demo/demo_workflow.py
-```
+Real workflow usage patterns:
 
 ```python
-# Start the dashboard, then run your workflow in the same process
+# Recommended: start the dashboard in the background, then run your workflow
 from tardigrade import Dashboard
 
 Dashboard().start_in_thread()
 ```
 
-After starting the dashboard, run your `@armor`-decorated steps in that same
+```python
+# Advanced: run the dashboard in the foreground and your workflow in another thread
+from threading import Thread
+from tardigrade import Dashboard
+
+dashboard = Dashboard()
+Thread(target=run_workflow, daemon=True).start()
+dashboard.start()
+```
+
+Both patterns require your `@armor`-decorated workflow to run in the same
 process so the event bus has something to display.
 
-The standalone `tardigrade dashboard` CLI opens the UI shell, but by itself it
+The standalone `tardigrade dashboard` CLI opens the UI shell, but by itself
 does not run a workflow.
 
 ## Demo
