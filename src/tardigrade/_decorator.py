@@ -416,11 +416,7 @@ def _extract_cost_report(
     context: ArmorContext,
 ) -> tuple[object, StepCostReport | None]:
     extracted_report = context.cost_report
-    if (
-        isinstance(result, tuple)
-        and len(result) >= 2
-        and isinstance(result[-1], StepCostReport)
-    ):
+    if isinstance(result, tuple) and len(result) >= 2 and isinstance(result[-1], StepCostReport):
         extracted_report = result[-1]
         remaining = result[:-1]
         if len(remaining) == 1:
@@ -489,11 +485,7 @@ def _record_step_success(
     workflow.record_step_result(
         StepResult(
             step_name=step_name,
-            status=(
-                StepStatus.CHECKPOINT_RESTORED
-                if from_checkpoint
-                else StepStatus.COMPLETED
-            ),
+            status=(StepStatus.CHECKPOINT_RESTORED if from_checkpoint else StepStatus.COMPLETED),
             value=value,
             duration_ms=duration_ms,
             attempt=attempt,

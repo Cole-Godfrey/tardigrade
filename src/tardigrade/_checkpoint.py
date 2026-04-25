@@ -3,10 +3,15 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 import threading
+from inspect import isawaitable
 from pathlib import Path
 from typing import Protocol, cast
 
 import aiosqlite
+from redis import Redis
+from redis.asyncio import Redis as AsyncRedis
+
+from ._types import RedisCheckpointConfig
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS checkpoints (
@@ -383,3 +388,207 @@ class SQLiteCheckpointStore:
             self._async_connection = None
             if connection is not None:
                 await connection.close()
+
+
+class RedisCheckpointStore:
+    def __init__(self, config: RedisCheckpointConfig | None = None) -> None:
+        self._config = RedisCheckpointConfig() if config is None else config
+        self._lock = threading.Lock()
+        self._sync_client: Redis | None = None
+        self._async_client: AsyncRedis | None = None
+        self._async_init_lock = asyncio.Lock()
+
+    @property
+    def config(self) -> RedisCheckpointConfig:
+        return self._config
+
+    def _build_sync_client(self) -> Redis:
+        return Redis(
+            host=self._config.host,
+            port=self._config.port,
+            db=self._config.db,
+            username=self._config.username,
+            password=self._config.password,
+            socket_timeout=self._config.socket_timeout,
+            socket_connect_timeout=self._config.socket_connect_timeout,
+            decode_responses=self._config.decode_responses,
+        )
+
+    def _build_async_client(self) -> AsyncRedis:
+        return AsyncRedis(
+            host=self._config.host,
+            port=self._config.port,
+            db=self._config.db,
+            username=self._config.username,
+            password=self._config.password,
+            socket_timeout=self._config.socket_timeout,
+            socket_connect_timeout=self._config.socket_connect_timeout,
+            decode_responses=self._config.decode_responses,
+        )
+
+    def _ensure_sync_client(self) -> Redis:
+        if self._sync_client is None:
+            client = self._build_sync_client()
+            client.ping()
+            self._sync_client = client
+        return self._sync_client
+
+    async def _ensure_async_client(self) -> AsyncRedis:
+        async with self._async_init_lock:
+            if self._async_client is None:
+                client = self._build_async_client()
+                ping_result = client.ping()
+                if isawaitable(ping_result):
+                    await ping_result
+                self._async_client = client
+
+        client = self._async_client
+        if client is None:
+            msg = "Async checkpoint Redis client failed to initialize"
+            raise RuntimeError(msg)
+        return client
+
+    def _result_key(self, workflow_id: str, step_name: str, run_id: str) -> str:
+        return f"{self._config.key_prefix}:checkpoint:{workflow_id}:{step_name}:{run_id}"
+
+    def _metadata_key(self, workflow_id: str, step_name: str, run_id: str) -> str:
+        return f"{self._config.key_prefix}:metadata:{workflow_id}:{step_name}:{run_id}"
+
+    def _run_patterns(self, workflow_id: str, run_id: str) -> tuple[str, str]:
+        return (
+            f"{self._config.key_prefix}:checkpoint:{workflow_id}:*:{run_id}",
+            f"{self._config.key_prefix}:metadata:{workflow_id}:*:{run_id}",
+        )
+
+    def _workflow_patterns(self, workflow_id: str) -> tuple[str, str]:
+        return (
+            f"{self._config.key_prefix}:checkpoint:{workflow_id}:*",
+            f"{self._config.key_prefix}:metadata:{workflow_id}:*",
+        )
+
+    def _delete_by_patterns(self, client: Redis, patterns: tuple[str, ...]) -> None:
+        for pattern in patterns:
+            keys = list(client.scan_iter(match=pattern))
+            if keys:
+                client.delete(*keys)
+
+    async def _adelete_by_patterns(
+        self,
+        client: AsyncRedis,
+        patterns: tuple[str, ...],
+    ) -> None:
+        for pattern in patterns:
+            keys = [key async for key in client.scan_iter(match=pattern)]
+            if keys:
+                await client.delete(*keys)
+
+    def save(self, workflow_id: str, step_name: str, run_id: str, result: bytes) -> None:
+        with self._lock:
+            client = self._ensure_sync_client()
+            client.set(self._result_key(workflow_id, step_name, run_id), result)
+
+    def load(self, workflow_id: str, step_name: str, run_id: str) -> bytes | None:
+        with self._lock:
+            client = self._ensure_sync_client()
+            payload = client.get(self._result_key(workflow_id, step_name, run_id))
+        if payload is None:
+            return None
+        return cast(bytes, payload)
+
+    def clear_run(self, workflow_id: str, run_id: str) -> None:
+        with self._lock:
+            client = self._ensure_sync_client()
+            self._delete_by_patterns(client, self._run_patterns(workflow_id, run_id))
+
+    def clear_workflow(self, workflow_id: str) -> None:
+        with self._lock:
+            client = self._ensure_sync_client()
+            self._delete_by_patterns(client, self._workflow_patterns(workflow_id))
+
+    def save_metadata(
+        self,
+        workflow_id: str,
+        step_name: str,
+        run_id: str,
+        metadata: bytes | None,
+    ) -> None:
+        with self._lock:
+            client = self._ensure_sync_client()
+            key = self._metadata_key(workflow_id, step_name, run_id)
+            if metadata is None:
+                client.delete(key)
+            else:
+                client.set(key, metadata)
+
+    def load_metadata(self, workflow_id: str, step_name: str, run_id: str) -> bytes | None:
+        with self._lock:
+            client = self._ensure_sync_client()
+            payload = client.get(self._metadata_key(workflow_id, step_name, run_id))
+        if payload is None:
+            return None
+        return cast(bytes, payload)
+
+    async def asave(
+        self,
+        workflow_id: str,
+        step_name: str,
+        run_id: str,
+        result: bytes,
+    ) -> None:
+        client = await self._ensure_async_client()
+        await client.set(self._result_key(workflow_id, step_name, run_id), result)
+
+    async def aload(self, workflow_id: str, step_name: str, run_id: str) -> bytes | None:
+        client = await self._ensure_async_client()
+        payload = await client.get(self._result_key(workflow_id, step_name, run_id))
+        if payload is None:
+            return None
+        return cast(bytes, payload)
+
+    async def aclear_run(self, workflow_id: str, run_id: str) -> None:
+        client = await self._ensure_async_client()
+        await self._adelete_by_patterns(client, self._run_patterns(workflow_id, run_id))
+
+    async def asave_metadata(
+        self,
+        workflow_id: str,
+        step_name: str,
+        run_id: str,
+        metadata: bytes | None,
+    ) -> None:
+        client = await self._ensure_async_client()
+        key = self._metadata_key(workflow_id, step_name, run_id)
+        if metadata is None:
+            await client.delete(key)
+        else:
+            await client.set(key, metadata)
+
+    async def aload_metadata(
+        self,
+        workflow_id: str,
+        step_name: str,
+        run_id: str,
+    ) -> bytes | None:
+        client = await self._ensure_async_client()
+        payload = await client.get(self._metadata_key(workflow_id, step_name, run_id))
+        if payload is None:
+            return None
+        return cast(bytes, payload)
+
+    async def aclear_workflow(self, workflow_id: str) -> None:
+        client = await self._ensure_async_client()
+        await self._adelete_by_patterns(client, self._workflow_patterns(workflow_id))
+
+    def close(self) -> None:
+        with self._lock:
+            client = self._sync_client
+            self._sync_client = None
+            if client is not None:
+                client.close()
+
+    async def aclose(self) -> None:
+        async with self._async_init_lock:
+            client = self._async_client
+            self._async_client = None
+            if client is not None:
+                await client.aclose()

@@ -164,4 +164,3 @@ def test_circuit_breaker_config_holds_monitored_exceptions() -> None:
     breaker = CircuitBreaker(config)
 
     assert breaker.config.monitored_exceptions == (ValueError,)
-

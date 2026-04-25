@@ -12,18 +12,16 @@ from tardigrade.dashboard._widgets import (
 )
 
 if TYPE_CHECKING:
+
     class _AppBase:
         CSS_PATH: str
         TITLE: str
 
-        def run(self) -> None:
-            ...
+        def run(self) -> None: ...
 
-        def set_interval(self, interval: float, callback: Any) -> None:
-            ...
+        def set_interval(self, interval: float, callback: Any) -> None: ...
 
-        def query_one(self, selector: str, expect_type: type[Any]) -> Any:
-            ...
+        def query_one(self, selector: str, expect_type: type[Any]) -> Any: ...
 
     ComposeResult = Iterable[object]
 
