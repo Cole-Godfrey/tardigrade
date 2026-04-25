@@ -41,7 +41,7 @@ classifiers = [
 ]
 dependencies = [
     "aiosqlite>=0.20.0",
-    "redis>=5.0.0",
+    "redis>=5.0.1",
     "structlog>=24.0.0",
 ]
 

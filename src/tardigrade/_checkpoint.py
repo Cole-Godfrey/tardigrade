@@ -411,7 +411,7 @@ class RedisCheckpointStore:
             password=self._config.password,
             socket_timeout=self._config.socket_timeout,
             socket_connect_timeout=self._config.socket_connect_timeout,
-            decode_responses=self._config.decode_responses,
+            decode_responses=False,
         )
 
     def _build_async_client(self) -> AsyncRedis:
@@ -423,7 +423,7 @@ class RedisCheckpointStore:
             password=self._config.password,
             socket_timeout=self._config.socket_timeout,
             socket_connect_timeout=self._config.socket_connect_timeout,
-            decode_responses=self._config.decode_responses,
+            decode_responses=False,
         )
 
     def _ensure_sync_client(self) -> Redis:
@@ -485,12 +485,12 @@ class RedisCheckpointStore:
     def save(self, workflow_id: str, step_name: str, run_id: str, result: bytes) -> None:
         with self._lock:
             client = self._ensure_sync_client()
-            client.set(self._result_key(workflow_id, step_name, run_id), result)
+        client.set(self._result_key(workflow_id, step_name, run_id), result)
 
     def load(self, workflow_id: str, step_name: str, run_id: str) -> bytes | None:
         with self._lock:
             client = self._ensure_sync_client()
-            payload = client.get(self._result_key(workflow_id, step_name, run_id))
+        payload = client.get(self._result_key(workflow_id, step_name, run_id))
         if payload is None:
             return None
         return cast(bytes, payload)
@@ -498,12 +498,12 @@ class RedisCheckpointStore:
     def clear_run(self, workflow_id: str, run_id: str) -> None:
         with self._lock:
             client = self._ensure_sync_client()
-            self._delete_by_patterns(client, self._run_patterns(workflow_id, run_id))
+        self._delete_by_patterns(client, self._run_patterns(workflow_id, run_id))
 
     def clear_workflow(self, workflow_id: str) -> None:
         with self._lock:
             client = self._ensure_sync_client()
-            self._delete_by_patterns(client, self._workflow_patterns(workflow_id))
+        self._delete_by_patterns(client, self._workflow_patterns(workflow_id))
 
     def save_metadata(
         self,
@@ -514,16 +514,16 @@ class RedisCheckpointStore:
     ) -> None:
         with self._lock:
             client = self._ensure_sync_client()
-            key = self._metadata_key(workflow_id, step_name, run_id)
-            if metadata is None:
-                client.delete(key)
-            else:
-                client.set(key, metadata)
+        key = self._metadata_key(workflow_id, step_name, run_id)
+        if metadata is None:
+            client.delete(key)
+        else:
+            client.set(key, metadata)
 
     def load_metadata(self, workflow_id: str, step_name: str, run_id: str) -> bytes | None:
         with self._lock:
             client = self._ensure_sync_client()
-            payload = client.get(self._metadata_key(workflow_id, step_name, run_id))
+        payload = client.get(self._metadata_key(workflow_id, step_name, run_id))
         if payload is None:
             return None
         return cast(bytes, payload)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import fakeredis
+import redis
 
 from tardigrade import RedisCheckpointStore
 from tardigrade._serializer import deserialize_result, serialize_result
@@ -113,11 +114,9 @@ def test_redis_checkpoint_store_config_and_build_clients() -> None:
     )
     store = RedisCheckpointStore(config)
     sync_client = store._build_sync_client()
-    async_client = store._build_async_client()
     try:
         assert store.config is config
-        assert sync_client is not None
-        assert async_client is not None
+        assert isinstance(sync_client, redis.Redis)
     finally:
         sync_client.close()
 

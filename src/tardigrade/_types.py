@@ -84,7 +84,6 @@ class RedisCheckpointConfig:
     key_prefix: str = "tardigrade"
     socket_timeout: float | None = None
     socket_connect_timeout: float | None = None
-    decode_responses: bool = False
 
 
 @dataclass(frozen=True, slots=True)
