@@ -64,10 +64,7 @@ def test_event_bus_publish_is_thread_safe() -> None:
         for index in range(100):
             bus.publish({"event": f"event_{offset + index}"})
 
-    threads = [
-        threading.Thread(target=publish_batch, args=(batch * 100,))
-        for batch in range(10)
-    ]
+    threads = [threading.Thread(target=publish_batch, args=(batch * 100,)) for batch in range(10)]
 
     for thread in threads:
         thread.start()

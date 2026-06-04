@@ -37,8 +37,7 @@ class TardigradeCircuitOpenError(Exception):
         self.function_name = function_name
         self.state = state
         super().__init__(
-            f"Circuit breaker for '{function_name}' is {state.value} "
-            f"and no fallback is configured"
+            f"Circuit breaker for '{function_name}' is {state.value} and no fallback is configured"
         )
 
 
@@ -73,6 +72,18 @@ class TardigradeBudgetExceededError(Exception):
 @dataclass(frozen=True, slots=True)
 class CheckpointConfig:
     enabled: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class RedisCheckpointConfig:
+    host: str = "localhost"
+    port: int = 6379
+    db: int = 0
+    username: str | None = None
+    password: str | None = None
+    key_prefix: str = "tardigrade"
+    socket_timeout: float | None = None
+    socket_connect_timeout: float | None = None
 
 
 @dataclass(frozen=True, slots=True)

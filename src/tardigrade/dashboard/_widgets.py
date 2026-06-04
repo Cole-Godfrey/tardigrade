@@ -6,23 +6,21 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    class _StaticBase:
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            ...
 
-        def update(self, renderable: object) -> None:
-            ...
+    class _StaticBase:
+        def __init__(self, *args: object, **kwargs: object) -> None: ...
+
+        def update(self, renderable: object) -> None: ...
 
     class _RichLogBase(_StaticBase):
-        def clear(self) -> None:
-            ...
+        def clear(self) -> None: ...
 
-        def write(self, line: str, scroll_end: bool = True) -> None:
-            ...
+        def write(self, line: str, scroll_end: bool = True) -> None: ...
 else:
     try:
         from textual.widgets import RichLog as _RichLogBase, Static as _StaticBase  # type: ignore[import-not-found]  # noqa: I001
     except ImportError:
+
         class _StaticBase:
             def __init__(self, *args: object, **kwargs: object) -> None:
                 self.id = kwargs.get("id")
@@ -141,9 +139,7 @@ class WorkflowPanel(_StaticBase):
         attempt = event.get("attempt") or event.get("total_attempts")
         max_attempts = event.get("max_attempts")
         state.attempt = attempt if isinstance(attempt, int) else state.attempt
-        state.max_attempts = (
-            max_attempts if isinstance(max_attempts, int) else state.max_attempts
-        )
+        state.max_attempts = max_attempts if isinstance(max_attempts, int) else state.max_attempts
         self.steps[step_name] = state
         self._refresh()
 
@@ -312,9 +308,8 @@ class CostPanel(_StaticBase):
             self._step_indexes[step_name] = len(self.step_costs) - 1
         else:
             existing = self.step_costs[index]
-            if (
-                bool(entry.get("restored_from_checkpoint"))
-                and not bool(existing.get("restored_from_checkpoint"))
+            if bool(entry.get("restored_from_checkpoint")) and not bool(
+                existing.get("restored_from_checkpoint")
             ):
                 # Preserve the original live execution record for this run so replayed
                 # checkpoint costs do not look like a second billable execution.

@@ -74,6 +74,23 @@ def test_checkpoint_store_clear_workflow_removes_everything(tmp_path: Path) -> N
         store.close()
 
 
+def test_checkpoint_store_metadata_save_load_and_delete(tmp_path: Path) -> None:
+    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+    try:
+        store.save_metadata("workflow", "step", "run-1", b"meta")
+        assert store.load_metadata("workflow", "step", "run-1") == b"meta"
+
+        store.save_metadata("workflow", "step", "run-1", None)
+        assert store.load_metadata("workflow", "step", "run-1") is None
+    finally:
+        store.close()
+
+
+def test_checkpoint_store_close_without_prior_usage(tmp_path: Path) -> None:
+    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+    store.close()
+
+
 def test_checkpoint_serialization_error_is_wrapped() -> None:
     with pytest.raises(TardigradeSerializationError):
         serialize_result(lambda: None)

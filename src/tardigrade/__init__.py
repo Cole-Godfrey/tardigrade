@@ -1,6 +1,6 @@
 from typing import Any
 
-from ._checkpoint import CheckpointStore, SQLiteCheckpointStore
+from ._checkpoint import CheckpointStore, RedisCheckpointStore, SQLiteCheckpointStore
 from ._context import ArmorContext, report_cost
 from ._cost import DEFAULT_PRICING
 from ._decorator import armor
@@ -14,6 +14,7 @@ from ._types import (
     CircuitState,
     DegradationConfig,
     DegradationPolicy,
+    RedisCheckpointConfig,
     RetryConfig,
     StepCostReport,
     TardigradeBudgetExceededError,
@@ -25,6 +26,7 @@ __all__ = [
     "ArmorContext",
     "RetryConfig",
     "CheckpointConfig",
+    "RedisCheckpointConfig",
     "BudgetConfig",
     "BudgetPolicy",
     "DegradationConfig",
@@ -39,6 +41,7 @@ __all__ = [
     "WorkflowResult",
     "CheckpointStore",
     "SQLiteCheckpointStore",
+    "RedisCheckpointStore",
     "DEFAULT_PRICING",
     "Dashboard",
     "configure_logging",

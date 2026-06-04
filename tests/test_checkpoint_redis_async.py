@@ -1,21 +1,25 @@
 from __future__ import annotations
 
-from pathlib import Path
-
+import fakeredis.aioredis
 import pytest
 
-from tardigrade import SQLiteCheckpointStore
+from tardigrade import RedisCheckpointStore
 from tardigrade._serializer import deserialize_result, serialize_result
+from tardigrade._types import RedisCheckpointConfig
+
+
+def _create_store() -> RedisCheckpointStore:
+    return RedisCheckpointStore(RedisCheckpointConfig(key_prefix="test-async"))
 
 
 @pytest.mark.asyncio
-async def test_async_checkpoint_store_save_and_load(tmp_path: Path) -> None:
-    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+async def test_async_redis_checkpoint_store_save_and_load() -> None:
+    store = _create_store()
+    client = fakeredis.aioredis.FakeRedis(decode_responses=False)
+    store._build_async_client = lambda: client  # type: ignore[method-assign]
     try:
         await store.asave("workflow", "step", "run-1", serialize_result({"value": 1}))
-
         loaded = await store.aload("workflow", "step", "run-1")
-
         assert loaded is not None
         assert deserialize_result(loaded) == {"value": 1}
     finally:
@@ -23,8 +27,10 @@ async def test_async_checkpoint_store_save_and_load(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_async_checkpoint_store_load_missing_returns_none(tmp_path: Path) -> None:
-    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+async def test_async_redis_checkpoint_store_load_missing_returns_none() -> None:
+    store = _create_store()
+    client = fakeredis.aioredis.FakeRedis(decode_responses=False)
+    store._build_async_client = lambda: client  # type: ignore[method-assign]
     try:
         assert await store.aload("workflow", "missing-step", "run-1") is None
     finally:
@@ -32,14 +38,14 @@ async def test_async_checkpoint_store_load_missing_returns_none(tmp_path: Path) 
 
 
 @pytest.mark.asyncio
-async def test_async_checkpoint_store_upsert_overwrites_existing_value(tmp_path: Path) -> None:
-    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+async def test_async_redis_checkpoint_store_upsert_overwrites_existing_value() -> None:
+    store = _create_store()
+    client = fakeredis.aioredis.FakeRedis(decode_responses=False)
+    store._build_async_client = lambda: client  # type: ignore[method-assign]
     try:
         await store.asave("workflow", "step", "run-1", serialize_result(1))
         await store.asave("workflow", "step", "run-1", serialize_result(2))
-
         loaded = await store.aload("workflow", "step", "run-1")
-
         assert loaded is not None
         assert deserialize_result(loaded) == 2
     finally:
@@ -47,8 +53,10 @@ async def test_async_checkpoint_store_upsert_overwrites_existing_value(tmp_path:
 
 
 @pytest.mark.asyncio
-async def test_async_checkpoint_store_clear_run_only_removes_that_run(tmp_path: Path) -> None:
-    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+async def test_async_redis_checkpoint_store_clear_run_only_removes_that_run() -> None:
+    store = _create_store()
+    client = fakeredis.aioredis.FakeRedis(decode_responses=False)
+    store._build_async_client = lambda: client  # type: ignore[method-assign]
     try:
         await store.asave("workflow", "step", "run-1", serialize_result("a"))
         await store.asave("workflow", "step", "run-2", serialize_result("b"))
@@ -68,8 +76,10 @@ async def test_async_checkpoint_store_clear_run_only_removes_that_run(tmp_path: 
 
 
 @pytest.mark.asyncio
-async def test_async_checkpoint_store_clear_workflow_removes_everything(tmp_path: Path) -> None:
-    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+async def test_async_redis_checkpoint_store_clear_workflow_removes_everything() -> None:
+    store = _create_store()
+    client = fakeredis.aioredis.FakeRedis(decode_responses=False)
+    store._build_async_client = lambda: client  # type: ignore[method-assign]
     try:
         await store.asave("workflow", "step-1", "run-1", serialize_result("a"))
         await store.asave("workflow", "step-2", "run-2", serialize_result("b"))
@@ -87,8 +97,10 @@ async def test_async_checkpoint_store_clear_workflow_removes_everything(tmp_path
 
 
 @pytest.mark.asyncio
-async def test_async_checkpoint_store_metadata_save_load_and_delete(tmp_path: Path) -> None:
-    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+async def test_async_redis_checkpoint_store_metadata_save_load_and_delete() -> None:
+    store = _create_store()
+    client = fakeredis.aioredis.FakeRedis(decode_responses=False)
+    store._build_async_client = lambda: client  # type: ignore[method-assign]
     try:
         await store.asave_metadata("workflow", "step", "run-1", b"meta")
         assert await store.aload_metadata("workflow", "step", "run-1") == b"meta"
@@ -100,6 +112,6 @@ async def test_async_checkpoint_store_metadata_save_load_and_delete(tmp_path: Pa
 
 
 @pytest.mark.asyncio
-async def test_async_checkpoint_store_close_without_prior_usage(tmp_path: Path) -> None:
-    store = SQLiteCheckpointStore(tmp_path / "checkpoints.db")
+async def test_async_redis_checkpoint_store_close_without_prior_usage() -> None:
+    store = _create_store()
     await store.aclose()
